@@ -1,3 +1,47 @@
+
+BeastBoy = function(game, pngId)
+{
+    this.game = game;
+    
+    Phaser.Sprite.call(this, game, 0,  0, pngId);
+    
+    game.add.existing(this);
+    
+    game.physics.arcade.enable(this);
+    this.anchor.setTo(0.5, 0.5);
+    this.scale.setTo(game.dpr, game.dpr);
+    this.body.velocity.setTo(0, 0);
+    this.transformTween = game.add.tween(this);
+    this.transformTween.stop();
+};
+
+BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
+BeastBoy.prototype.constructor = BeastBoy;
+
+BeastBoy.prototype.update = function()
+{
+    if(this.game.input.activePointer.isDown)
+    {
+        console.log("mouseDown");
+        if(this.transformTween.isRunning == false)
+        {
+            if(this.game.input.y < this.game.world.height / 2)
+            {
+                
+                console.log("going up");
+                this.transformTween.to({y:this.game.world.height * .1}, 30);
+                this.transformTween.start();
+            }
+            
+            else if(this.game.input.y > this.game.world.height / 2)
+            {
+                console.log("going down");
+                this.transformTween.to({y:this.game.world.height * .9}, 30);
+                this.transformTween.start();
+            }
+        }
+    }
+};
 /* jshint browser:true */
 // create BasicGame Class
 BasicGame = {
@@ -6,6 +50,7 @@ BasicGame = {
 
 // create Game function in BasicGame
 BasicGame.Game = function (game) {
+    this.game = game;
 };
 
 // set Game function prototype
@@ -24,6 +69,7 @@ BasicGame.Game.prototype = {
         // * RESIZE
         // See http://docs.phaser.io/Phaser.ScaleManager.html for full document
         this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+       // this.scale.setScreenSize(true);
         // If you wish to align your game in the middle of the page then you can
         // set this value to true. It will place a re-calculated margin-left
         // pixel value onto the canvas element which is updated on orientation /
@@ -54,17 +100,17 @@ BasicGame.Game.prototype = {
         // Here we load the assets required for our preloader (in this case a 
         // background and a loading bar)
         this.load.image('logo', 'asset/phaser.png');
+        this.load.image('base_beastboy', 'asset/base_beastboy.png');
     },
 
     create: function () {
         // Add logo to the center of the stage
-        this.logo = this.add.sprite(
-            this.world.centerX, // (centerX, centerY) is the center coordination
-            this.world.centerY,
-            'logo');
-        // Set the anchor to the center of the sprite
-        this.logo.anchor.setTo(0.5, 0.5);
-
+        this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
+        
+    },
+    
+    update: function()
+    {
     },
 
     gameResized: function (width, height) {

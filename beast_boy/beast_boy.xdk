@@ -5,7 +5,7 @@
       "projectTypeName": "com.intel.xdk.projecttype.webapp",
       "src": "webapp/template-phaser-landscape-webapp/sample.zip",
       "projectGuid": "ffc97f87-6b66-4b91-8e86-e83490e8f036",
-      "lastModifiedDate": 1453151073039,
+      "lastModifiedDate": 1453162217005,
       "creationDate": 1453151072246
     },
     "sourceDirectory": "www",
@@ -34,7 +34,8 @@
         "dependedBy": [],
         "originType": "cordova.io",
         "origin": "org.apache.cordova.splashscreen",
-        "permissions": {}
+        "permissions": {},
+        "name": "Splashscreen"
       }
     ],
     "buildConfigurations": {
@@ -98,7 +99,7 @@
         "excludedLibraries_": "",
         "iosProvs_": [],
         "cordovaCLIVersion_": "5.1.1",
-        "crosswalkVersion_": "14",
+        "crosswalkVersion_": "15",
         "appVersion_": "0.0.1",
         "appDescription_": "Use this template to start creating Phaser based mobile game web apps.",
         "appAuthor_": "Intel XDK",
