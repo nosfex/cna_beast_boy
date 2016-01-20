@@ -10,9 +10,11 @@ BeastBoy = function(game, pngId)
     game.physics.arcade.enable(this);
     this.anchor.setTo(0.5, 0.5);
     this.scale.setTo(game.dpr, game.dpr);
-    this.body.velocity.setTo(0, 0);
+    this.body.velocity.setTo(0, 300);
     this.transformTween = game.add.tween(this);
     this.transformTween.stop();
+    
+
 };
 
 BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
@@ -42,6 +44,20 @@ BeastBoy.prototype.update = function()
         }
     }
 };
+
+
+WorldBounds = function(game)
+{
+    Phaser.Group.call(this, game, game.world, 'WorldBounds', false, true, Phaser.Physics.ARCADE);
+    
+   
+    return this;
+};
+
+WorldBounds.prototype = Object.create(Phaser.Group.prototype);
+WorldBounds.prototype.constructor = WorldBounds;
+
+
 /* jshint browser:true */
 // create BasicGame Class
 BasicGame = {
@@ -52,6 +68,8 @@ BasicGame = {
 BasicGame.Game = function (game) {
     this.game = game;
 };
+
+
 
 // set Game function prototype
 BasicGame.Game.prototype = {
@@ -101,16 +119,42 @@ BasicGame.Game.prototype = {
         // background and a loading bar)
         this.load.image('logo', 'asset/phaser.png');
         this.load.image('base_beastboy', 'asset/base_beastboy.png');
+        this.load.image('wall', 'asset/wall.png');
     },
 
     create: function () {
         // Add logo to the center of the stage
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
+        this.worldBounds = this.game.add.physicsGroup();
         
+         
+        ceil = this.worldBounds.create(0, 0, 'wall');
+        ceil.scale.setTo(1000, 2) ;
+        ceil.body.moves = false;
+
+        floor = this.worldBounds.create( 0, this.game.world.height * 0.9, 'wall');
+        floor.scale.setTo(1000, 2) ;
+        floor.body.moves = false;
+        
+        this.worldBounds.add(ceil);this.worldBounds.add(floor);
+        //this.game.physics.arcade.gravity.y = 250;
+       
     },
     
     update: function()
     {
+        console.log("concha de dios");
+        this.game.physics.arcade.collide(this.beastBoy, this.worldBounds, this.collHandler, this.procHandler, this);
+    },
+    
+    procHandler :function(a, b)
+    {
+        return true;
+    },
+    
+    collHandler :function(a, b)
+    {
+        
     },
 
     gameResized: function (width, height) {
