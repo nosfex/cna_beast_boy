@@ -8,13 +8,16 @@ BeastBoy = function(game, pngId)
     game.add.existing(this);
     
     game.physics.arcade.enable(this);
-    this.anchor.setTo(0.5, 0.5);
+    this.anchor.setTo(0, 0.5);
     this.scale.setTo(game.dpr, game.dpr);
-    this.body.velocity.setTo(0, 300);
+    this.body.velocity.setTo(0, 1800);
     this.transformTween = game.add.tween(this);
     this.transformTween.stop();
     
-
+    this.swipe = new Swipe(this.game);
+    
+    this.currentBeastBoyForm = 0;
+   // this.body.immovable = true;
 };
 
 BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
@@ -25,38 +28,101 @@ BeastBoy.prototype.update = function()
     if(this.game.input.activePointer.isDown)
     {
         console.log("mouseDown");
-        if(this.transformTween.isRunning == false)
+    }
+    
+    direction = this.swipe.check();
+    if(direction != null)
+    {
+        this.body.moves = true;
+        switch(direction.direction)    
         {
-            if(this.game.input.y < this.game.world.height / 2)
-            {
+            case this.swipe.DIRECTION_UP: 
+                this.body.velocity.setTo(0, -1800);
+                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.currentBeastBoyForm = 1;
+                break;
                 
-                console.log("going up");
-                this.transformTween.to({y:this.game.world.height * .1}, 30);
-                this.transformTween.start();
-            }
-            
-            else if(this.game.input.y > this.game.world.height / 2)
-            {
-                console.log("going down");
-                this.transformTween.to({y:this.game.world.height * .9}, 30);
-                this.transformTween.start();
-            }
+            case this.swipe.DIRECTION_DOWN:
+                this.body.velocity.setTo(0, 1800);
+                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.currentBeastBoyForm = 0;
+                break;
+            case this.swipe.DIRECTION_RIGHT:
+                
+                this.scale.setTo(this.game.dpr * 3, this.game.dpr * 3);
+                this.position.setTo(0, this.game.world.height * 0.5);
+                if(this.body.velocity.y < 0)
+                {
+                    this.body.velocity.setTo(0, 1800);
+                }
+                this.currentBeastBoyForm = 2;
+                break;
         }
     }
-};
-
-
-WorldBounds = function(game)
-{
-    Phaser.Group.call(this, game, game.world, 'WorldBounds', false, true, Phaser.Physics.ARCADE);
     
-   
-    return this;
 };
 
-WorldBounds.prototype = Object.create(Phaser.Group.prototype);
-WorldBounds.prototype.constructor = WorldBounds;
 
+Obstacles = function(game)
+{
+    this.game = game;
+    Phaser.Group.call(this, game, game.world, 'Obstacles', false, true, Phaser.Physics.ARCADE);
+    this.obstacleTimer = 0;
+    
+    game.add.existing(this);
+    
+};
+
+
+
+Obstacles.prototype = Object.create(Phaser.Group.prototype);
+Obstacles.prototype.constructor = Obstacles;
+
+Obstacles.prototype.update = function()
+{
+    
+    if(this.obstacleTimer > 3)
+    {
+        this.addObstacle();
+        
+        this.obstacleTimer = 0;
+    }
+    this.obstacleTimer += this.game.time.physicsElapsed;
+};
+
+
+Obstacles.prototype.addObstacle  = function()
+{
+    
+    randomId = this.game.rnd.integerInRange(0, 2);
+    heightPer = 1;
+    scaleY = this.game.world.height ;
+    scaleX = 10;
+    anchorY = 1;
+    switch(randomId)
+    {
+        case 0: // GH: low wall 
+            heightPer = 0.2;
+            anchorY = 0;
+            break;
+        case 1: // GH: High wall
+            heightPer = 0.78;
+            break;
+        case 2: // GH: all cover wall
+            scaleY += 20;
+            heightPer = 1;
+            scaleX += 10;
+            break;
+            
+    };
+    
+    obs = this.create(this.game.world.width * 1.1, this.game.world.height * heightPer, 'wall');
+    obs.scale.setTo(scaleX, scaleY);
+    obs.anchor.setTo(0, anchorY);
+    obs.body.velocity.set(-600, 0);
+    obs.obstacleID = randomId;
+    this.add(obs);
+};
 
 /* jshint browser:true */
 // create BasicGame Class
@@ -125,28 +191,67 @@ BasicGame.Game.prototype = {
     create: function () {
         // Add logo to the center of the stage
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
+        this.obstacles = new Obstacles(this.game);
         this.worldBounds = this.game.add.physicsGroup();
         
          
         ceil = this.worldBounds.create(0, 0, 'wall');
-        ceil.scale.setTo(1000, 2) ;
+        ceil.scale.setTo(1000, 40) ;
         ceil.body.moves = false;
 
-        floor = this.worldBounds.create( 0, this.game.world.height * 0.9, 'wall');
-        floor.scale.setTo(1000, 2) ;
+        floor = this.worldBounds.create( 0, this.game.world.height - 40, 'wall');
+        floor.scale.setTo(1000, 40) ;
         floor.body.moves = false;
         
         this.worldBounds.add(ceil);this.worldBounds.add(floor);
+        
         //this.game.physics.arcade.gravity.y = 250;
-       
+        //this.beastBoy.body.collides(this.obstacleCollHandler, this.obstacles, this);
     },
     
     update: function()
     {
-        console.log("concha de dios");
-        this.game.physics.arcade.collide(this.beastBoy, this.worldBounds, this.collHandler, this.procHandler, this);
+        if(this.beastBoy != null)   
+        {
+            this.game.physics.arcade.collide(this.beastBoy, this.worldBounds, this.collHandler, this.procHandler, this);
+            this.game.physics.arcade.collide(this.beastBoy, this.obstacles, this.obstacleCollHandler, this.preObstacleCollHandler, this);
+        }
     },
     
+    obstacleCollHandler :function(a, b)
+    {
+      
+    },
+    
+       
+    preObstacleCollHandler :function(a, b)
+    {
+     
+        if(a == null)
+            return false;
+        console.log("endresult: " +b.obstacleID == a.currentBeastBoyForm);
+        console.log("b data: " + b.obstacleID);
+        console.log("a data: " + a.currentBeastBoyForm);
+        if(a.currentBeastBoyForm == 2 && a.currentBeastBoyForm == b.obstacleID)   
+        {
+            b.body.enabled = false;
+            b.kill();
+            a.body.velocity.setTo(0, 0);
+            a.position.x = 0;
+            this.obstacles.remove(b);
+        }
+        else
+        {
+            a.kill();
+         //   this.remove(a);
+            this.beastBoy = null;
+            return false;
+        }
+        
+        return true;
+    },
+    
+   
     procHandler :function(a, b)
     {
         return true;
