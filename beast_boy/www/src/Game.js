@@ -17,7 +17,15 @@ BeastBoy = function(game, pngId)
     this.swipe = new Swipe(this.game);
     
     this.currentBeastBoyForm = 0;
-   // this.body.immovable = true;
+    this.health = this.maxHealth = 3;
+    
+    this.blinking   = false;
+    this.maxBlink   = 1;
+    this.curBlink   = 0;
+    this.ready      = true;
+    this.metersRanTotal  = 0;
+    this.metersRan = 0;
+    this.speedStage = 0;
 };
 
 BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
@@ -25,13 +33,38 @@ BeastBoy.prototype.constructor = BeastBoy;
 
 BeastBoy.prototype.update = function()
 {
+    if(this.health <= 0)
+    {
+        return;
+    }
+    
+    
+    if(this.blinking)
+    {
+        if(this.curBlink >= this.maxBlink)
+        {
+            this.curBlink   = 0 ;
+            this.blinking   = false;
+            this.visible    = true;
+            this.ready      = true;
+            
+            this.position.setTo(0, this.game.world.height* 0.5);
+            this.body.velocity.setTo(0, 1800);
+        }
+        else
+        {
+            this.visible = !this.visible;
+            this.curBlink += this.game.time.physicsElapsed;
+            return;
+        }
+    }
     if(this.game.input.activePointer.isDown)
     {
         console.log("mouseDown");
     }
     
     direction = this.swipe.check();
-    if(direction != null)
+    if(direction !== null)
     {
         this.body.moves = true;
         switch(direction.direction)    
@@ -47,8 +80,8 @@ BeastBoy.prototype.update = function()
                 this.scale.setTo(this.game.dpr, this.game.dpr);
                 this.currentBeastBoyForm = 0;
                 break;
+          
             case this.swipe.DIRECTION_RIGHT:
-                
                 this.scale.setTo(this.game.dpr * 3, this.game.dpr * 3);
                 this.position.setTo(0, this.game.world.height * 0.5);
                 if(this.body.velocity.y < 0)
@@ -60,6 +93,20 @@ BeastBoy.prototype.update = function()
         }
     }
     
+    this.metersRanTotal += (10) * this.game.time.physicsElapsed;
+    this.metersRan = this.metersRanTotal;
+    if(this.metersRan >= 50  )
+    {
+        this.speedStage += 1;
+        console.log(this.speedStage + " :SPEEDSTAGE" );
+        this.metersRan = 0;
+    }
+       
+};
+
+BeastBoy.prototype.startBlinking = function()
+{
+    this.blinking = true;
 };
 
 
@@ -71,6 +118,8 @@ Obstacles = function(game)
     
     game.add.existing(this);
     
+    this.obsMaxTimer = 2.5 + game.rnd.between(-0.7, 0.5);
+    this.obstacleSequence = [];
 };
 
 
@@ -81,7 +130,7 @@ Obstacles.prototype.constructor = Obstacles;
 Obstacles.prototype.update = function()
 {
     
-    if(this.obstacleTimer > 3)
+    if(this.obstacleTimer > this.obsMaxTimer)
     {
         this.addObstacle();
         
@@ -94,11 +143,23 @@ Obstacles.prototype.update = function()
 Obstacles.prototype.addObstacle  = function()
 {
     
+    if(this.stop == true)
+        return;
     randomId = this.game.rnd.integerInRange(0, 2);
     heightPer = 1;
     scaleY = this.game.world.height ;
     scaleX = 10;
     anchorY = 1;
+    obsSize = this.obstacleSequence.length;
+    if(obsSize > 2)
+    {
+        
+        while(this.obstacleSequence[obsSize - 2] == randomId && this.obstacleSequence[obsSize -1] == randomId)
+        {
+            randomId = this.game.rnd.integerInRange(0, 2);
+        }
+    }
+        
     switch(randomId)
     {
         case 0: // GH: low wall 
@@ -114,14 +175,24 @@ Obstacles.prototype.addObstacle  = function()
             scaleX += 10;
             break;
             
-    };
-    
+    }
+
     obs = this.create(this.game.world.width * 1.1, this.game.world.height * heightPer, 'wall');
     obs.scale.setTo(scaleX, scaleY);
     obs.anchor.setTo(0, anchorY);
-    obs.body.velocity.set(-600, 0);
+    obs.body.velocity.set(-700, 0);
+    console.log(this.game.beastBoy.speedStage);
     obs.obstacleID = randomId;
+    obs.tint = 0xff0000;
     this.add(obs);
+    
+    this.obsMaxTimer = 2 + this.game.rnd.between(-0.5, 0.5);
+    this.obstacleSequence.push(randomId);
+};
+
+Obstacles.prototype.forceStop = function(val)
+{
+    this.stop = val;
 };
 
 /* jshint browser:true */
@@ -186,15 +257,19 @@ BasicGame.Game.prototype = {
         this.load.image('logo', 'asset/phaser.png');
         this.load.image('base_beastboy', 'asset/base_beastboy.png');
         this.load.image('wall', 'asset/wall.png');
+        this.load.spritesheet('button', 'asset/button_sheet.png', 200, 200);
     },
 
     create: function () {
         // Add logo to the center of the stage
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
-        this.obstacles = new Obstacles(this.game);
+        this.obstacles = new Obstacles(this);
         this.worldBounds = this.game.add.physicsGroup();
         
-         
+        this.meterCount = this.game.add.text(this.game.world.width * .5, this.game.world.height * .1, 'METERS: ', {font:"30pt Courier", fill:"#00FF00", stroke:"#000000", strokeThickness:2});
+        this.meterCount.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
+        this.meterCount.anchor.setTo(0.5, 0.5);
+        
         ceil = this.worldBounds.create(0, 0, 'wall');
         ceil.scale.setTo(1000, 40) ;
         ceil.body.moves = false;
@@ -205,29 +280,57 @@ BasicGame.Game.prototype = {
         
         this.worldBounds.add(ceil);this.worldBounds.add(floor);
         
+        this.lifeContainer = [];
+        this.lifeIdx = 0;
+        for(i = 0; i < 3 ; i++)
+        {
+            this.lifeContainer.push(this.game.add.sprite(this.game.world.width * 0.85 + (i * 120), this.game.world.height * 0.93, 'base_beastboy' ));
+            this.lifeContainer[i].scale.setTo(this.game.dpr * 0.5, this.game.dpr * 0.5);
+        }
         //this.game.physics.arcade.gravity.y = 250;
         //this.beastBoy.body.collides(this.obstacleCollHandler, this.obstacles, this);
     },
     
     update: function()
     {
-        if(this.beastBoy != null)   
+        if(this.beastBoy !== null)   
         {
             this.game.physics.arcade.collide(this.beastBoy, this.worldBounds, this.collHandler, this.procHandler, this);
             this.game.physics.arcade.collide(this.beastBoy, this.obstacles, this.obstacleCollHandler, this.preObstacleCollHandler, this);
         }
+        
+        if(this.beastBoy.ready == true)
+        {
+            this.obstacles.forceStop(false);
+            this.obstacles.forEach(function(item)
+            {
+                if(item.body.velocity.x >= 0)
+                {
+                    item.body.velocity.x = -700;    
+                }
+            });
+        }
+        else
+        {
+            this.obstacles.forEach(function(item)
+            {
+                item.body.velocity.x = 0;    
+            });
+            this.beastBoy.speedStage = 0;
+        }
+        
+        this.meterCount.text = 'METERS: ' + Math.floor(this.beastBoy.metersRanTotal);
     },
     
     obstacleCollHandler :function(a, b)
     {
       
     },
-    
        
     preObstacleCollHandler :function(a, b)
     {
      
-        if(a == null)
+        if(a === null)
             return false;
         console.log("endresult: " +b.obstacleID == a.currentBeastBoyForm);
         console.log("b data: " + b.obstacleID);
@@ -239,16 +342,53 @@ BasicGame.Game.prototype = {
             a.body.velocity.setTo(0, 0);
             a.position.x = 0;
             this.obstacles.remove(b);
+    
+            return false;
         }
         else
         {
-            a.kill();
-         //   this.remove(a);
-            this.beastBoy = null;
+         
+            this.obstacles.forceStop(true);
+            
+            a.health--;
+           
+            if(this.lifeIdx < this.lifeContainer.length)
+            {
+                
+                this.lifeContainer[this.lifeIdx].visible = false;
+                this.lifeIdx++;
+            }
+            a.ready = false;
+            
+            if(a.health <= 0)
+            {
+                // GH: exit App? restart it?
+                text = this.game.add.text(this.game.world.width * .5, this.game.world.height * .5, 'GAME OVER', {font:"30pt Courier", fill:"#FF00FF", stroke:"#000000", strokeThickness:2});
+                text.scale.setTo(this.game.dpr* 8, this.game.dpr * 8);
+                text.anchor.setTo(0.5, 0.5);
+                
+                button = this.game.add.button(this.game.world.width * .5, this.game.world.height * .8, 'button', this.resetOnClick, this, 0,1,2);
+                button.scale.setTo(this.game.dpr* 2, this.game.dpr * 2);
+                button.anchor.setTo(0.5, 0.5);
+            }
+            else
+            {
+                b.body.enabled = false;
+                b.kill();
+                this.obstacles.remove(b);
+                a.startBlinking();
+            }
+            //a.kill();
+            //this.beastBoy = null;
             return false;
         }
         
         return true;
+    },
+    
+    resetOnClick :function()
+    {
+        this.game.state.start('Game');    
     },
     
    
