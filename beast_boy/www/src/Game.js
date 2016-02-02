@@ -4,28 +4,26 @@ BeastBoy = function(game, pngId)
     this.game = game;
     
     Phaser.Sprite.call(this, game, 0,  0, pngId);
-    
     game.add.existing(this);
-    
     game.physics.arcade.enable(this);
+    
     this.anchor.setTo(0, 0.5);
     this.scale.setTo(game.dpr, game.dpr);
     this.body.velocity.setTo(0, 1800);
     this.transformTween = game.add.tween(this);
     this.transformTween.stop();
-    
     this.swipe = new Swipe(this.game);
     
     this.currentBeastBoyForm = 0;
     this.health = this.maxHealth = 3;
     
-    this.blinking   = false;
-    this.maxBlink   = 1;
-    this.curBlink   = 0;
-    this.ready      = true;
-    this.metersRanTotal  = 0;
-    this.metersRan = 0;
-    this.speedStage = 0;
+    this.blinking           = false;
+    this.maxBlink           = 1;
+    this.curBlink           = 0;
+    this.ready              = true;
+    this.metersRanTotal     = 0;
+    this.metersRan          = 0;
+    this.speedStage         = 0;
 };
 
 BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
@@ -37,7 +35,6 @@ BeastBoy.prototype.update = function()
     {
         return;
     }
-    
     
     if(this.blinking)
     {
@@ -70,13 +67,13 @@ BeastBoy.prototype.update = function()
         switch(direction.direction)    
         {
             case this.swipe.DIRECTION_UP: 
-                this.body.velocity.setTo(0, -1800);
+                this.body.velocity.setTo(0, -2200);
                 this.scale.setTo(this.game.dpr, this.game.dpr);
                 this.currentBeastBoyForm = 1;
                 break;
                 
             case this.swipe.DIRECTION_DOWN:
-                this.body.velocity.setTo(0, 1800);
+                this.body.velocity.setTo(0, 2200);
                 this.scale.setTo(this.game.dpr, this.game.dpr);
                 this.currentBeastBoyForm = 0;
                 break;
@@ -86,7 +83,7 @@ BeastBoy.prototype.update = function()
                 this.position.setTo(0, this.game.world.height * 0.5);
                 if(this.body.velocity.y < 0)
                 {
-                    this.body.velocity.setTo(0, 1800);
+                    this.body.velocity.setTo(0, 2200);
                 }
                 this.currentBeastBoyForm = 2;
                 break;
@@ -100,8 +97,7 @@ BeastBoy.prototype.update = function()
         this.speedStage += 1;
         console.log(this.speedStage + " :SPEEDSTAGE" );
         this.metersRan = 0;
-    }
-       
+    }       
 };
 
 BeastBoy.prototype.startBlinking = function()
@@ -118,7 +114,7 @@ Obstacles = function(game)
     
     game.add.existing(this);
     
-    this.obsMaxTimer = 2.5 + game.rnd.between(-0.7, 0.5);
+    this.obsMaxTimer = 1.8;
     this.obstacleSequence = [];
 };
 
@@ -180,13 +176,13 @@ Obstacles.prototype.addObstacle  = function()
     obs = this.create(this.game.world.width * 1.1, this.game.world.height * heightPer, 'wall');
     obs.scale.setTo(scaleX, scaleY);
     obs.anchor.setTo(0, anchorY);
-    obs.body.velocity.set(-700, 0);
+    obs.body.velocity.set(-1000, 0);
     console.log(this.game.beastBoy.speedStage);
     obs.obstacleID = randomId;
     obs.tint = 0xff0000;
     this.add(obs);
     
-    this.obsMaxTimer = 2 + this.game.rnd.between(-0.5, 0.5);
+    this.obsMaxTimer = 1.1;
     this.obstacleSequence.push(randomId);
 };
 
@@ -284,7 +280,7 @@ BasicGame.Game.prototype = {
         this.lifeIdx = 0;
         for(i = 0; i < 3 ; i++)
         {
-            this.lifeContainer.push(this.game.add.sprite(this.game.world.width * 0.85 + (i * 120), this.game.world.height * 0.93, 'base_beastboy' ));
+            this.lifeContainer.push(this.game.add.sprite(this.game.world.width * 0.8 + (i * 80), this.game.world.height * 0.93, 'base_beastboy' ));
             this.lifeContainer[i].scale.setTo(this.game.dpr * 0.5, this.game.dpr * 0.5);
         }
         //this.game.physics.arcade.gravity.y = 250;
@@ -306,7 +302,7 @@ BasicGame.Game.prototype = {
             {
                 if(item.body.velocity.x >= 0)
                 {
-                    item.body.velocity.x = -700;    
+                    item.body.velocity.x = -1000;    
                 }
             });
         }
