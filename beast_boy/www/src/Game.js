@@ -57,10 +57,51 @@ BeastBoy.prototype.update = function()
     }
     if(this.game.input.activePointer.isDown)
     {
-        console.log("mouseDown");
+        console.log("mouseDownY: " + this.game.input.activePointer.y);
+        
+        //;
+        direction = "";
+        if(this.game.input.activePointer.y < this.game.world.height * .3)
+        {
+            direction = "UP";
+        } 
+        if(this.game.input.activePointer.y > this.game.world.height * .3 && this.game.input.activePointer.y < this.game.world.height * .6)
+        {
+            direction = "CENTER";
+        }
+        if(this.game.input.activePointer.y > this.game.world.height * .6 && this.game.input.activePointer.y <= this.game.world.height )
+        {
+            direction = "DOWN";
+        }
+        
+        
+        switch(direction)    
+        {
+            case "UP": 
+                this.body.velocity.setTo(0, -2200);
+                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.currentBeastBoyForm = 1;
+                break;
+                
+            case "DOWN":
+                this.body.velocity.setTo(0, 2200);
+                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.currentBeastBoyForm = 0;
+                break;
+          
+            case "CENTER":
+                this.scale.setTo(this.game.dpr * 3, this.game.dpr * 3);
+                this.position.setTo(0, this.game.world.height * 0.5);
+                if(this.body.velocity.y < 0)
+                {
+                    this.body.velocity.setTo(0, 2200);
+                }
+                this.currentBeastBoyForm = 2;
+                break;
+        }
     }
     
-    direction = this.swipe.check();
+   /* direction = this.swipe.check();
     if(direction !== null)
     {
         this.body.moves = true;
@@ -89,7 +130,7 @@ BeastBoy.prototype.update = function()
                 break;
         }
     }
-    
+    */
     this.metersRanTotal += (10) * this.game.time.physicsElapsed;
     this.metersRan = this.metersRanTotal;
     if(this.metersRan >= 50  )
@@ -243,6 +284,8 @@ BasicGame.Game.prototype = {
         // Re-calculate scale mode and update screen size. This only applies if
         // ScaleMode is not set to RESIZE.
         this.scale.refresh();
+        
+        this.input.addPointer();
 
     },
 
@@ -328,9 +371,6 @@ BasicGame.Game.prototype = {
      
         if(a === null)
             return false;
-        console.log("endresult: " +b.obstacleID == a.currentBeastBoyForm);
-        console.log("b data: " + b.obstacleID);
-        console.log("a data: " + a.currentBeastBoyForm);
         if(a.currentBeastBoyForm == 2 && a.currentBeastBoyForm == b.obstacleID)   
         {
             b.body.enabled = false;

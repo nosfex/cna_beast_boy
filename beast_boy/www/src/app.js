@@ -6,9 +6,12 @@
     var innerWidth = window.innerWidth;
     var innerHeight = window.innerHeight;
     var ratio = innerWidth / innerHeight;
+    
     var game = new Phaser.Game(Math.ceil(innerWidth*window.devicePixelRatio), innerHeight * window.devicePixelRatio, Phaser.AUTO, 'game');
 
     game.dpr = window.devicePixelRatio / 3;
+    
+    
     //  Add the States your game has.
     //  You don't have to do this in the html, it could be done in your Game state too, but for simplicity I'll keep it here.
     game.state.add('Game', BasicGame.Game);
