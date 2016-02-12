@@ -90,7 +90,7 @@ BeastBoy.prototype.update = function()
                 break;
           
             case "CENTER":
-                this.scale.setTo(this.game.dpr * 3, this.game.dpr * 3);
+                this.scale.setTo(this.game.dpr * 3, this.game.dpr * 6);
                 this.position.setTo(0, this.game.world.height * 0.5);
                 if(this.body.velocity.y < 0)
                 {
@@ -296,10 +296,35 @@ BasicGame.Game.prototype = {
         this.load.image('logo', 'asset/phaser.png');
         this.load.image('base_beastboy', 'asset/base_beastboy.png');
         this.load.image('wall', 'asset/wall.png');
+        this.load.image('monkey', 'asset/monkey.png');
+        this.load.image('flying', 'asset/flying.png');
+        this.load.image('land', 'asset/land.png');
         this.load.spritesheet('button', 'asset/button_sheet.png', 200, 200);
     },
 
     create: function () {
+        
+        this.monkeyBanner = this.game.add.sprite(0, this.game.world.height * 0.33, 'monkey');
+        this.monkeyBanner.scale.setTo(1, (this.game.world.height * 0.3) / 10);
+        
+        this.monkeyText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .4, 'MONKEY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
+        this.monkeyText.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
+        this.monkeyText.anchor.setTo(0.5, 0.5);
+        
+        
+        this.flyingBanner = this.game.add.sprite(0, 0, 'flying');
+        this.flyingBanner.scale.setTo(1, (this.game.world.height * 0.3) / 10);
+        
+        this.flyingText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .1, 'BIRDY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
+        this.flyingText.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
+        this.flyingText.anchor.setTo(0.5, 0.5);
+        
+        this.landBanner = this.game.add.sprite(0, this.game.world.height * 0.66, 'land');
+        this.landBanner.scale.setTo(1, (this.game.world.height * 0.3) / 10);
+        
+        this.landText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .8, 'SNAKEY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
+        this.landText.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
+        this.landText.anchor.setTo(0.5, 0.5);
         // Add logo to the center of the stage
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
         this.obstacles = new Obstacles(this);
@@ -328,6 +353,8 @@ BasicGame.Game.prototype = {
         }
         //this.game.physics.arcade.gravity.y = 250;
         //this.beastBoy.body.collides(this.obstacleCollHandler, this.obstacles, this);
+        
+        
     },
     
     update: function()
