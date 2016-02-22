@@ -8,7 +8,7 @@ BeastBoy = function(game, pngId)
     game.physics.arcade.enable(this);
     
     this.anchor.setTo(0, 0.5);
-    this.scale.setTo(game.dpr, game.dpr);
+    this.scale.setTo(game.dpr *.5, game.dpr *.5);
     this.body.velocity.setTo(0, 1800);
     this.transformTween = game.add.tween(this);
     this.transformTween.stop();
@@ -24,6 +24,7 @@ BeastBoy = function(game, pngId)
     this.metersRanTotal     = 0;
     this.metersRan          = 0;
     this.speedStage         = 0;
+    this.position.x = 100;
 };
 
 BeastBoy.prototype = Object.create(Phaser.Sprite.prototype);
@@ -45,7 +46,7 @@ BeastBoy.prototype.update = function()
             this.visible    = true;
             this.ready      = true;
             
-            this.position.setTo(0, this.game.world.height* 0.5);
+            this.position.setTo(100, this.game.world.height* 0.5);
             this.body.velocity.setTo(0, 1800);
         }
         else
@@ -79,19 +80,19 @@ BeastBoy.prototype.update = function()
         {
             case "UP": 
                 this.body.velocity.setTo(0, -2200);
-                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.scale.setTo(this.game.dpr *.5, this.game.dpr * .5) ;
                 this.currentBeastBoyForm = 1;
                 break;
                 
             case "DOWN":
                 this.body.velocity.setTo(0, 2200);
-                this.scale.setTo(this.game.dpr, this.game.dpr);
+                this.scale.setTo(this.game.dpr * .5, this.game.dpr * .5);
                 this.currentBeastBoyForm = 0;
                 break;
           
             case "CENTER":
-                this.scale.setTo(this.game.dpr * 3, this.game.dpr * 6);
-                this.position.setTo(0, this.game.world.height * 0.5);
+                this.scale.setTo(this.game.dpr * 1.5, this.game.dpr * 1.5);
+                this.position.setTo(100, this.game.world.height * 0.5);
                 if(this.body.velocity.y < 0)
                 {
                     this.body.velocity.setTo(0, 2200);
@@ -239,7 +240,8 @@ BasicGame = {
 };
 
 // create Game function in BasicGame
-BasicGame.Game = function (game) {
+BasicGame.Game = function (game) 
+{
     this.game = game;
 };
 
@@ -286,6 +288,13 @@ BasicGame.Game.prototype = {
         this.scale.refresh();
         
         this.input.addPointer();
+        if(this.game.device.android || this.game.device.iOS)
+        {
+        }
+        else
+        {
+   ///         this.game.dpr = 0.3;
+        }
 
     },
 
@@ -302,9 +311,9 @@ BasicGame.Game.prototype = {
         this.load.spritesheet('button', 'asset/button_sheet.png', 200, 200);
     },
 
-    create: function () {
-        
-        this.monkeyBanner = this.game.add.sprite(0, this.game.world.height * 0.33, 'monkey');
+    createBanners :function()
+    {
+           this.monkeyBanner = this.game.add.sprite(0, this.game.world.height * 0.33, 'monkey');
         this.monkeyBanner.scale.setTo(1, (this.game.world.height * 0.3) / 10);
         
         this.monkeyText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .4, 'MONKEY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
@@ -324,14 +333,20 @@ BasicGame.Game.prototype = {
         
         this.landText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .8, 'SNAKEY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
         this.landText.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
-        this.landText.anchor.setTo(0.5, 0.5);
+        this.landText.anchor.setTo(0.5, 0.5);  
+    },
+    
+    create: function () {
         // Add logo to the center of the stage
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
+        
+        this.createBanners();
+        
         this.obstacles = new Obstacles(this);
         this.worldBounds = this.game.add.physicsGroup();
         
         this.meterCount = this.game.add.text(this.game.world.width * .5, this.game.world.height * .1, 'METERS: ', {font:"30pt Courier", fill:"#00FF00", stroke:"#000000", strokeThickness:2});
-        this.meterCount.scale.setTo(this.game.dpr * 2, this.game.dpr * 2);
+        this.meterCount.scale.setTo(this.game.dpr, this.game.dpr);
         this.meterCount.anchor.setTo(0.5, 0.5);
         
         ceil = this.worldBounds.create(0, 0, 'wall');
@@ -349,7 +364,7 @@ BasicGame.Game.prototype = {
         for(i = 0; i < 3 ; i++)
         {
             this.lifeContainer.push(this.game.add.sprite(this.game.world.width * 0.8 + (i * 80), this.game.world.height * 0.93, 'base_beastboy' ));
-            this.lifeContainer[i].scale.setTo(this.game.dpr * 0.5, this.game.dpr * 0.5);
+            this.lifeContainer[i].scale.setTo(this.game.dpr * 0.25, this.game.dpr * 0.25);
         }
         //this.game.physics.arcade.gravity.y = 250;
         //this.beastBoy.body.collides(this.obstacleCollHandler, this.obstacles, this);
@@ -403,7 +418,7 @@ BasicGame.Game.prototype = {
             b.body.enabled = false;
             b.kill();
             a.body.velocity.setTo(0, 0);
-            a.position.x = 0;
+            a.position.x = 100;
             this.obstacles.remove(b);
     
             return false;
@@ -427,11 +442,11 @@ BasicGame.Game.prototype = {
             {
                 // GH: exit App? restart it?
                 text = this.game.add.text(this.game.world.width * .5, this.game.world.height * .5, 'GAME OVER', {font:"30pt Courier", fill:"#FF00FF", stroke:"#000000", strokeThickness:2});
-                text.scale.setTo(this.game.dpr* 8, this.game.dpr * 8);
+                text.scale.setTo(this.game.dpr* 2, this.game.dpr * 2);
                 text.anchor.setTo(0.5, 0.5);
                 
                 button = this.game.add.button(this.game.world.width * .5, this.game.world.height * .8, 'button', this.resetOnClick, this, 0,1,2);
-                button.scale.setTo(this.game.dpr* 2, this.game.dpr * 2);
+                button.scale.setTo(this.game.dpr* .5, this.game.dpr * .5);
                 button.anchor.setTo(0.5, 0.5);
             }
             else
