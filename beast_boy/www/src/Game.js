@@ -137,7 +137,6 @@ BeastBoy.prototype.update = function()
     if(this.metersRan >= 50  )
     {
         this.speedStage += 1;
-        console.log(this.speedStage + " :SPEEDSTAGE" );
         this.metersRan = 0;
     }       
 };
@@ -160,21 +159,25 @@ Obstacles = function(game)
     this.obstacleSequence = [];
 };
 
-
-
 Obstacles.prototype = Object.create(Phaser.Group.prototype);
 Obstacles.prototype.constructor = Obstacles;
 
 Obstacles.prototype.update = function()
 {
-    
     if(this.obstacleTimer > this.obsMaxTimer)
     {
         this.addObstacle();
         
         this.obstacleTimer = 0;
     }
-    this.obstacleTimer += this.game.time.physicsElapsed;
+    if(this.stop == false)
+    {
+        this.obstacleTimer += this.game.time.physicsElapsed;
+    }
+    else
+    {
+        this.obstacleTimer = 0;
+    }
 };
 
 
@@ -191,38 +194,41 @@ Obstacles.prototype.addObstacle  = function()
     obsSize = this.obstacleSequence.length;
     if(obsSize > 2)
     {
-        
         while(this.obstacleSequence[obsSize - 2] == randomId && this.obstacleSequence[obsSize -1] == randomId)
         {
             randomId = this.game.rnd.integerInRange(0, 2);
         }
     }
         
+    asset = 'wall';
     switch(randomId)
     {
         case 0: // GH: low wall 
+            scaleY = this.game.world.height * 0.5;
             heightPer = 0.2;
             anchorY = 0;
+            asset = 'wall_bottom';
             break;
         case 1: // GH: High wall
+            scaleY = this.game.world.height * 0.2;
             heightPer = 0.78;
+            asset = 'wall_top';
             break;
         case 2: // GH: all cover wall
-            scaleY += 20;
+            asset = 'wall_full';
+            scaleY = this.game.world.height * 0.2;
             heightPer = 1;
             scaleX += 10;
             break;
             
     }
 
-    obs = this.create(this.game.world.width * 1.1, this.game.world.height * heightPer, 'wall');
-    obs.scale.setTo(scaleX, scaleY);
-    obs.anchor.setTo(0, anchorY);
-    obs.body.velocity.set(-1000, 0);
-    console.log(this.game.beastBoy.speedStage);
-    obs.obstacleID = randomId;
-    obs.tint = 0xff0000;
+    obs = this.game.add.sprite(this.game.world.width * 1.1,  scaleY , asset);
     this.add(obs);
+  
+    obs.body.velocity.set(-1000, 0);
+    obs.obstacleID = randomId;
+    obs.body.allowGravity = false;
     
     this.obsMaxTimer = 1.1;
     this.obstacleSequence.push(randomId);
@@ -231,6 +237,7 @@ Obstacles.prototype.addObstacle  = function()
 Obstacles.prototype.forceStop = function(val)
 {
     this.stop = val;
+    
 };
 
 /* jshint browser:true */
@@ -302,18 +309,29 @@ BasicGame.Game.prototype = {
 
         // Here we load the assets required for our preloader (in this case a 
         // background and a loading bar)
-        this.load.image('logo', 'asset/phaser.png');
         this.load.image('base_beastboy', 'asset/base_beastboy.png');
         this.load.image('wall', 'asset/wall.png');
+        // GH: Banners
         this.load.image('monkey', 'asset/monkey.png');
         this.load.image('flying', 'asset/flying.png');
         this.load.image('land', 'asset/land.png');
+        // GH: Level
+        this.load.image('bkg', 'asset/bkg_.png');
+        this.load.image('top', 'asset/top_.png');
+        this.load.image('bottom', 'asset/bottom.png');
+        // GH; Level, obstacles
+        this.load.image('wall_bottom', 'asset/wall_bottom.png');
+        this.load.image('wall_full', 'asset/wall_full.png');
+        this.load.image('wall_top', 'asset/wall_top.png');
+        
         this.load.spritesheet('button', 'asset/button_sheet.png', 200, 200);
+        
     },
 
+    // GH: Banner indicators for where the player is expected to touch to transform
     createBanners :function()
     {
-           this.monkeyBanner = this.game.add.sprite(0, this.game.world.height * 0.33, 'monkey');
+        this.monkeyBanner = this.game.add.sprite(0, this.game.world.height * 0.33, 'monkey');
         this.monkeyBanner.scale.setTo(1, (this.game.world.height * 0.3) / 10);
         
         this.monkeyText = this.game.add.text(this.game.world.width * .1, this.game.world.height * .4, 'MONKEY ', {font:"10pt Courier", fill:"#FFFFFF", stroke:"#000000", strokeThickness:2});
@@ -338,26 +356,32 @@ BasicGame.Game.prototype = {
     
     create: function () {
         // Add logo to the center of the stage
+        this.bkg = this.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'bkg');
+        this.bkg.autoScroll(-40,0);
+        //this.bkg.anchor.setTo(0.5, 0.5);
+        this.bkg.scale.setTo(this.game.dpr * .75, this.game.dpr * .75);
+   
         this.beastBoy = new BeastBoy(this.game, 'base_beastboy');
         
-        this.createBanners();
-        
         this.obstacles = new Obstacles(this);
+       
         this.worldBounds = this.game.add.physicsGroup();
-        
+       
+        ceil = this.add.tileSprite(0, -this.game.world.height * .05, this.game.world.width, this.game.world.height * .4, 'top');
+        ceil.autoScroll(-360, 0);
         this.meterCount = this.game.add.text(this.game.world.width * .5, this.game.world.height * .1, 'METERS: ', {font:"30pt Courier", fill:"#00FF00", stroke:"#000000", strokeThickness:2});
         this.meterCount.scale.setTo(this.game.dpr, this.game.dpr);
         this.meterCount.anchor.setTo(0.5, 0.5);
         
-        ceil = this.worldBounds.create(0, 0, 'wall');
-        ceil.scale.setTo(1000, 40) ;
-        ceil.body.moves = false;
-
-        floor = this.worldBounds.create( 0, this.game.world.height - 40, 'wall');
-        floor.scale.setTo(1000, 40) ;
-        floor.body.moves = false;
+        floor = this.add.tileSprite( 0, this.game.world.height * .73, this.game.world.width, this.game.world.height * .4, 'bottom');
+        floor.autoScroll(-360, 0);
         
-        this.worldBounds.add(ceil);this.worldBounds.add(floor);
+        this.worldBounds.add(ceil);
+        this.worldBounds.add(floor);
+        ceil.body.moves = false;
+        floor.body.moves = false;
+        this.createBanners();
+    
         
         this.lifeContainer = [];
         this.lifeIdx = 0;
@@ -368,8 +392,8 @@ BasicGame.Game.prototype = {
         }
         //this.game.physics.arcade.gravity.y = 250;
         //this.beastBoy.body.collides(this.obstacleCollHandler, this.obstacles, this);
-        
-        
+            
+      
     },
     
     update: function()
