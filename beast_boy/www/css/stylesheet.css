@@ -3,3 +3,4 @@ body {
     background: #000;
     overflow: hidden;
 }
+@font-face{font-family: 'lubalin';	src: url('lubalin.otf'); format('opentype');}
